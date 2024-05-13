@@ -6,13 +6,17 @@ import java.security.Security;
 
 public class Blockchain {
 
-	public static ArrayList<Block> blockchain = new ArrayList<Block>();
-	public static HashMap<String, TransactionOutput> UTXOs = new HashMap<String, TransactionOutput>();
+	public static ArrayList<Block> blockchain = new ArrayList<Block>(); // The list of blocks in the blockchain.
+	public static HashMap<String, TransactionOutput> UTXOs = new HashMap<String, TransactionOutput>(); // The list of all unspent transaction outputs (UTXOs).
 
-	public static int difficulty = 5;
-	public static float minimumTransaction = 0.1f;
-	public static Transaction genesisTransaction;
+	public static int difficulty = 5; // The difficulty level for mining new blocks (Typically changed based on number of miners).
+	public static float minimumTransaction = 0.1f; // The minimum transaction value.
+	public static Transaction genesisTransaction; // The genesis transaction, which initializes the blockchain.
 
+	/**
+     * Validates the entire blockchain, ensuring all blocks and transactions are valid.
+     * @return True if the blockchain is valid, false otherwise.
+     */
 	public static Boolean isChainValid() {
 		Block currentBlock; 
 		Block previousBlock;
@@ -90,11 +94,18 @@ public class Blockchain {
 		return true;
 	}
 
+	/**
+     * Adds a new block to the blockchain after having it mined.
+     * @param newBlock The new block to be added.
+     */
 	public static void addBlock(Block newBlock) {
 		newBlock.mineBlock(difficulty);
 		blockchain.add(newBlock);
 	}
-
+	/**
+     * Main method to initialize the blockchain with the genesis block.
+     * @param args Command line arguments.
+     */
     public static void main(String[] args) {	
 		Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 

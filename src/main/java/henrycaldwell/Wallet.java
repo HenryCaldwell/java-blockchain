@@ -6,17 +6,26 @@ import java.util.HashMap;
 import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 
+/**
+ * Represents a wallet in the blockchain system.
+ */
 public class Wallet {
 
-    public PrivateKey privateKey;
-	public PublicKey publicKey;
+	public PublicKey publicKey; // The public key of the wallet.
+    public PrivateKey privateKey; // The private key of the wallet.
 
-	public HashMap<String, TransactionOutput> ownedUTXOs = new HashMap<String, TransactionOutput>();
+	public HashMap<String, TransactionOutput> ownedUTXOs = new HashMap<String, TransactionOutput>(); // The UTXOs owned by this wallet.
 
+	/**
+     * Constructs a Wallet instance and generates a new key pair.
+     */
     public Wallet() {
         generateKeys();
     }
 
+	/**
+     * Generates a new public-private key pair for the wallet using ECDSA and Bouncy Castle.
+     */
     private void generateKeys() {
         try {
 			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDSA", "BC");
@@ -31,10 +40,14 @@ public class Wallet {
 		}
     }
 
+	/**
+     * Calculates the balance of the wallet by summing the values of all owned UTXOs.
+     * @return The total balance.
+     */
 	public float getBalance() {
 		float total = 0;
 
-		for (Map.Entry<String, TransactionOutput> item: Blockchain.UTXOs.entrySet()){
+		for (Map.Entry<String, TransactionOutput> item : Blockchain.UTXOs.entrySet()){
         	TransactionOutput UTXO = item.getValue();
 
             if (UTXO.isMine(publicKey)) {
@@ -46,6 +59,12 @@ public class Wallet {
 		return total;
 	}
 
+	/**
+     * Creates and signs a new transaction to send funds to a recipient.
+     * @param recipient The public key of the recipient.
+     * @param value The amount to send.
+     * @return The new transaction if successful, or null if there are insufficient funds.
+     */
 	public Transaction sendFunds(PublicKey recipient, float value) {
 		if (getBalance() < value) {
 			System.out.println("*Insufficient funds for transaction (Transaction discarded)*");

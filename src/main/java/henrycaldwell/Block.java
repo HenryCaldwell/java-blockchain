@@ -29,7 +29,8 @@ public class Block {
      * @return The calculated hash.
      */
 	public String calculateHash() {
-		String calculatedhash = StringUtil.invokeSha256(
+		String calculatedhash = 
+			StringUtil.applySha256(
 			previousHash + 
 			Long.toString(timeStamp) + 
 			Integer.toString(nonce) + 
