@@ -120,7 +120,7 @@ public class Blockchain {
 		UTXOs.put(genesisTransaction.outputs.get(0).id, genesisTransaction.outputs.get(0));
 
 		System.out.println("Creating and Mining Genesis block... ");
-		Block genesis = new Block("0");
+		Block genesis = new Block("0000000000000000000000000000000000000000000000000000000000000000");
 		genesis.addTransaction(genesisTransaction);
 		addBlock(genesis);
 
