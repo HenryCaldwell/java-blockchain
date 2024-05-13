@@ -29,17 +29,17 @@ public class Blockchain {
 			previousBlock = blockchain.get(i - 1);
 
 			if(!currentBlock.hash.equals(currentBlock.calculateHash()) ){
-				System.out.println("Current Hashes not equal");			
+				System.out.println("*Current Hashes not equal*");			
 				return false;
 			}
 
 			if(!previousBlock.hash.equals(currentBlock.previousHash) ) {
-				System.out.println("Previous Hashes not equal");
+				System.out.println("*Previous Hashes not equal*");
 				return false;
 			}
 
 			if(!currentBlock.hash.substring(0, difficulty).equals(hashTarget)) {
-				System.out.println("This block hasn't been mined");
+				System.out.println("*This block hasn't been mined*");
 				return false;
 			}
 
@@ -49,12 +49,12 @@ public class Blockchain {
 				Transaction currentTransaction = currentBlock.transactions.get(j);
 
 				if (!currentTransaction.verifiySignature()) {
-					System.out.println("#Signature on Transaction(" + j + ") is invalid");
+					System.out.println("*Signature on Transaction(" + j + ") is invalid*");
 					return false; 
 				}
 
 				if (currentTransaction.getInputsValue() != currentTransaction.getOutputsValue()) {
-					System.out.println("#Inputs are note equal to outputs on Transaction(" + j + ")");
+					System.out.println("*Inputs are note equal to outputs on Transaction(" + j + ")*");
 					return false; 
 				}
 
@@ -62,12 +62,12 @@ public class Blockchain {
 					tempOutput = tempUTXOs.get(input.transactionOutputId);
 
 					if (tempOutput == null) {
-						System.out.println("#Referenced input on Transaction(" + j + ") is missing");
+						System.out.println("*Referenced input on Transaction(" + j + ") is missing*");
 						return false;
 					}
 
 					if (input.UTXO.value != tempOutput.value) {
-						System.out.println("#Referenced input Transaction(" + j + ") value is invalid");
+						System.out.println("*Referenced input Transaction(" + j + ") value is invalid*");
 						return false;
 					}
 
@@ -79,18 +79,18 @@ public class Blockchain {
 				}
 
 				if (currentTransaction.outputs.get(0).reciepient != currentTransaction.recipient) {
-					System.out.println("#Transaction(" + j + ") output reciepient is not who it should be");
+					System.out.println("*Transaction(" + j + ") output reciepient is not who it should be*");
 					return false;
 				}
 
 				if (currentTransaction.outputs.get(1).reciepient != currentTransaction.sender) {
-					System.out.println("#Transaction(" + j + ") output 'change' is not sender.");
+					System.out.println("*Transaction(" + j + ") output 'change' is not sender*");
 					return false;
 				}
 			}
 		}
 
-		System.out.println("#Blockchain verified");
+		System.out.println("*Blockchain verified*");
 		return true;
 	}
 
