@@ -10,7 +10,8 @@ public class Blockchain {
 	public static HashMap<String, TransactionOutput> UTXOs = new HashMap<String, TransactionOutput>(); // The list of all unspent transaction outputs (UTXOs).
 
 	public static int difficulty = 5; // The difficulty level for mining new blocks (Typically changed based on number of miners).
-	public static float minimumTransaction = 0.1f; // The minimum transaction value.
+	public static double minimumTransaction = 0.1f; // The minimum transaction value.
+	public static double feeRate = 0.0001f; // Fee rate in satoshis per byte
 	public static Transaction genesisTransaction; // The genesis transaction, which initializes the blockchain.
 
 	/**
@@ -29,12 +30,12 @@ public class Blockchain {
 			previousBlock = blockchain.get(i - 1);
 
 			if(!currentBlock.hash.equals(currentBlock.calculateHash()) ){
-				System.out.println("*Current Hashes not equal*");			
+				System.out.println("*Current hashes not equal*");			
 				return false;
 			}
 
 			if(!previousBlock.hash.equals(currentBlock.previousHash) ) {
-				System.out.println("*Previous Hashes not equal*");
+				System.out.println("*Previous hashes not equal*");
 				return false;
 			}
 
@@ -49,12 +50,12 @@ public class Blockchain {
 				Transaction currentTransaction = currentBlock.transactions.get(j);
 
 				if (!currentTransaction.verifiySignature()) {
-					System.out.println("*Signature on Transaction(" + j + ") is invalid*");
+					System.out.println("*Signature on transaction(" + j + ") is invalid*");
 					return false; 
 				}
 
-				if (currentTransaction.getInputsValue() != currentTransaction.getOutputsValue()) {
-					System.out.println("*Inputs are note equal to outputs on Transaction(" + j + ")*");
+				if (currentTransaction.getInputsValue() != currentTransaction.getOutputsValue() + currentTransaction.fee) {
+					System.out.println("*Inputs are not equal to outputs on transaction(" + j + ")*");
 					return false; 
 				}
 
@@ -62,12 +63,12 @@ public class Blockchain {
 					tempOutput = tempUTXOs.get(input.transactionOutputId);
 
 					if (tempOutput == null) {
-						System.out.println("*Referenced input on Transaction(" + j + ") is missing*");
+						System.out.println("*Referenced input on transaction(" + j + ") is missing*");
 						return false;
 					}
 
 					if (input.UTXO.value != tempOutput.value) {
-						System.out.println("*Referenced input Transaction(" + j + ") value is invalid*");
+						System.out.println("*Referenced input transaction(" + j + ") value is invalid*");
 						return false;
 					}
 
@@ -102,6 +103,7 @@ public class Blockchain {
 		newBlock.mineBlock(difficulty);
 		blockchain.add(newBlock);
 	}
+
 	/**
      * Main method to initialize the blockchain with the genesis block.
      * @param args Command line arguments.
@@ -119,28 +121,28 @@ public class Blockchain {
 		genesisTransaction.outputs.add(new TransactionOutput(genesisTransaction.recipient, genesisTransaction.value, genesisTransaction.transactionId));
 		UTXOs.put(genesisTransaction.outputs.get(0).id, genesisTransaction.outputs.get(0));
 
-		System.out.println("Creating and Mining Genesis block... ");
+		System.out.println("Creating and mining genesis block... ");
 		Block genesis = new Block("0000000000000000000000000000000000000000000000000000000000000000");
 		genesis.addTransaction(genesisTransaction);
 		addBlock(genesis);
 
 		Block block1 = new Block(genesis.hash);
 		System.out.println("\nWalletA's balance is: " + walletA.getBalance());
-		System.out.println("\nWalletA is Attempting to send funds (40) to WalletB...");
+		System.out.println("\nWalletA is attempting to send funds (40) to WalletB...");
 		block1.addTransaction(walletA.sendFunds(walletB.publicKey, 40f));
 		addBlock(block1);
 		System.out.println("\nWalletA's balance is: " + walletA.getBalance());
 		System.out.println("WalletB's balance is: " + walletB.getBalance());
 
 		Block block2 = new Block(block1.hash);
-		System.out.println("\nWalletA Attempting to send more funds (1000) than it has...");
+		System.out.println("\nWalletA is attempting to send more funds (1000) than it has...");
 		block2.addTransaction(walletA.sendFunds(walletB.publicKey, 1000f));
 		addBlock(block2);
 		System.out.println("\nWalletA's balance is: " + walletA.getBalance());
 		System.out.println("WalletB's balance is: " + walletB.getBalance());
 
 		Block block3 = new Block(block2.hash);
-		System.out.println("\nWalletB is Attempting to send funds (20) to WalletA...");
+		System.out.println("\nWalletB is attempting to send funds (20) to WalletA...");
 		block3.addTransaction(walletB.sendFunds( walletA.publicKey, 20));
 		System.out.println("\nWalletA's balance is: " + walletA.getBalance());
 		System.out.println("WalletB's balance is: " + walletB.getBalance());

@@ -1,6 +1,7 @@
 package henrycaldwell;
 
-import java.security.*;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.util.ArrayList;
 
 /**
@@ -11,7 +12,8 @@ public class Transaction {
     public String transactionId; // The unique identifier of the transaction.
     public PublicKey sender; // The public key of the sender.
     public PublicKey recipient; // The public key of the recipient.
-    public float value; // The value of the transaction.
+    public double value; // The value of the transaction.
+    public double fee; // The value of the transaction fee.
     public byte[] signature; // The digital signature of the transaction.
 
     public ArrayList<TransactionInput> inputs = new ArrayList<TransactionInput>(); // The list of transaction inputs.
@@ -26,12 +28,49 @@ public class Transaction {
      * @param value The value of the transaction.
      * @param inputs The list of inputs for the transaction.
      */
-    public Transaction(PublicKey from, PublicKey to, float value, ArrayList<TransactionInput> inputs) {
+    public Transaction(PublicKey from, PublicKey to, double value, ArrayList<TransactionInput> inputs) {
 		this.sender = from;
 		this.recipient = to;
 		this.value = value;
 		this.inputs = inputs;
+        this.fee = calculateTransactionFee();
 	}
+
+    private double calculateTransactionFee() {
+        return calculateTransactionSize() * Blockchain.feeRate;
+    }
+
+    private int calculateTransactionSize() {
+        int size = 0;
+
+        size += 4;  // Version
+        size += 1;  // Input Count
+        size += 1;  // Output Count
+        size += 4;  // Locktime
+
+        // Inputs
+        if (inputs != null) {
+            for (@SuppressWarnings("unused") TransactionInput input : inputs) {
+                size += 32; // Previous Transaction Hash
+                size += 4;  // Previous Transaction Output Index
+                size += 1;  // ScriptSig Size
+                size += 72; // Signature
+                size += 33; // Public Key (compressed)
+                size += 4;  // Sequence
+            }
+        }
+
+        // Outputs
+        if (outputs != null) {
+            for (@SuppressWarnings("unused") TransactionOutput output : outputs) {
+                size += 8;  // Value
+                size += 1;  // ScriptPubKey Size
+                size += 25; // ScriptPubKey
+            }
+        }
+
+        return size;
+    }
 
 	/**
      * Calculates the hash of the transaction.
@@ -42,7 +81,8 @@ public class Transaction {
 		return StringUtil.applySha256(
 			StringUtil.getStringFromKey(sender) + 
 			StringUtil.getStringFromKey(recipient) + 
-			Float.toString(value) + 
+			Double.toString(value) + 
+            Double.toString(fee) +
 			sequence);
 	}
 
@@ -53,7 +93,7 @@ public class Transaction {
     public void generateSignature(PrivateKey privateKey) {
         String data = StringUtil.getStringFromKey(sender) + 
 			StringUtil.getStringFromKey(recipient) + 
-			Float.toString(value);
+			Double.toString(value);
         signature = StringUtil.applyECDSASig(privateKey, data);		
     }
 
@@ -64,7 +104,7 @@ public class Transaction {
     public boolean verifiySignature() {
         String data = StringUtil.getStringFromKey(sender) + 
 			StringUtil.getStringFromKey(recipient) + 
-			Float.toString(value);
+			Double.toString(value);
         return StringUtil.verifyECDSASig(sender, data, signature);
     }
 
@@ -73,8 +113,8 @@ public class Transaction {
      * @return True if the transaction is successfully processed, false otherwise.
      */
     public boolean processTransaction() {
-        if (verifiySignature() == false) {
-			System.out.println("*Transaction Signature failed to verify*");
+        if (!verifiySignature()) {
+			System.out.println("*Transaction signature failed to verify*");
 			return false;
 		}
 
@@ -83,17 +123,24 @@ public class Transaction {
 		}
 
         if (getInputsValue() < Blockchain.minimumTransaction) {
-			System.out.println("*Transaction inputs to small: " + getInputsValue() + "*");
+			System.out.println("*Transaction inputs too small: " + getInputsValue() + "*");
 			return false;
 		}
 
-        float leftOver = getInputsValue() - value;
+        Double totalValue = value + fee;
+
+        if (getInputsValue() < totalValue) {
+            System.out.println("*Transaction inputs too small to cover value and fee: " + getInputsValue() + "*");
+            return false;
+        }
+
+        Double leftOver = getInputsValue() - totalValue;
         transactionId = calulateHash();
         outputs.add(new TransactionOutput(this.recipient, value, transactionId));
         outputs.add(new TransactionOutput(this.sender, leftOver, transactionId));
 
         for (TransactionOutput output : outputs) {
-			Blockchain.UTXOs.put(output.id , output);
+			Blockchain.UTXOs.put(output.id, output);
 		}
 
         for (TransactionInput input : inputs) {
@@ -108,8 +155,8 @@ public class Transaction {
      * Calculates the total value of the transaction inputs.
      * @return The total value.
      */
-    public float getInputsValue() {
-		float total = 0;
+    public double getInputsValue() {
+		double total = 0;
 
 		for (TransactionInput i : inputs) {
 			if (i.UTXO == null) continue;
@@ -123,8 +170,8 @@ public class Transaction {
      * Calculates the total value of the transaction outputs.
      * @return The total value.
      */
-    public float getOutputsValue() {
-		float total = 0;
+    public double getOutputsValue() {
+		double total = 0;
 
 		for (TransactionOutput output : outputs) {
 			total += output.value;

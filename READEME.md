@@ -59,11 +59,15 @@ The `Transaction` class represents a transaction in the blockchain, including in
 - `sender`: Public key of the sender.
 - `recipient`: Public key of the recipient.
 - `value`: Value of the transaction.
+- `fee`: Value of the transaction fee.
 - `signature`: Digital signature of the transaction.
 - `inputs`: List of transaction inputs.
 - `outputs`: List of transaction outputs.
+- `sequence`: Counter to avoid identical hashes.
 
 #### Methods
+- `calulateTransactionFee()`: Calculates the transaction fee based on the transaction size and fee rate.
+- `calulateTransactionSize()`: Calculates the size of the transactionin bytes.
 - `calulateHash()`: Calculates the hash of the transaction.
 - `generateSignature(PrivateKey privateKey)`: Generates the digital signature for the transaction using the sender's private key.
 - `verifiySignature()`: Verifies the digital signature of the transaction.
@@ -93,7 +97,7 @@ The `TransactionOutput` class represents an output in a blockchain transaction, 
 - `parentTransactionId`: ID of the transaction this output belongs to.
 
 #### Methods
-- `TransactionOutput(PublicKey reciepient, float value, String parentTransactionId)`: Constructs a TransactionOutput with the specified recipient, value, and parent transaction ID.
+- `TransactionOutput(PublicKey reciepient, double value, String parentTransactionId)`: Constructs a TransactionOutput with the specified recipient, value, and parent transaction ID.
 - `isMine(PublicKey publicKey)`: Checks if the provided public key matches the recipient's public key.
 
 ### `Wallet`
@@ -108,7 +112,7 @@ The `Wallet` class represents a wallet in the blockchain system, managing a pair
 #### Methods
 - `generateKeys()`: Generates a new public-private key pair for the wallet using ECDSA.
 - `getBalance()`: Calculates the balance of the wallet by summing the values of all owned UTXOs.
-- `sendFunds(PublicKey recipient, float value)`: Creates and signs a new transaction to send funds to a recipient.
+- `sendFunds(PublicKey recipient, double value)`: Creates and signs a new transaction to send funds to a recipient.
 
 ## Libraries Used
 

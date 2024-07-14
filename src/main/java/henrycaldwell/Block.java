@@ -51,7 +51,7 @@ public class Block {
 			hash = calculateHash();
 		}
 
-		System.out.println("*Block Mined* HASH: " + hash);
+		System.out.println("*Block mined* HASH: " + hash);
 	}
 
 	/**

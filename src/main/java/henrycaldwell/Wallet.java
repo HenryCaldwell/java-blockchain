@@ -44,8 +44,8 @@ public class Wallet {
      * Calculates the balance of the wallet by summing the values of all owned UTXOs.
      * @return The total balance.
      */
-	public float getBalance() {
-		float total = 0;
+	public double getBalance() {
+		double total = 0;
 
 		for (Map.Entry<String, TransactionOutput> item : Blockchain.UTXOs.entrySet()){
         	TransactionOutput UTXO = item.getValue();
@@ -65,26 +65,34 @@ public class Wallet {
      * @param value The amount to send.
      * @return The new transaction if successful, or null if there are insufficient funds.
      */
-	public Transaction sendFunds(PublicKey recipient, float value) {
-		if (getBalance() < value) {
-			System.out.println("*Insufficient funds for transaction (Transaction discarded)*");
-			return null;
-		}
-
+	public Transaction sendFunds(PublicKey recipient, double value) {
 		ArrayList<TransactionInput> inputs = new ArrayList<TransactionInput>();
 
-		float total = 0;
-		for (Map.Entry<String, TransactionOutput> item : ownedUTXOs.entrySet()){
+		double total = 0;
+		double requiredAmount = value;
+		double currentFee = 0;
+
+		for (Map.Entry<String, TransactionOutput> item : ownedUTXOs.entrySet()) {
 			TransactionOutput UTXO = item.getValue();
 			total += UTXO.value;
 			inputs.add(new TransactionInput(UTXO.id));
-			if (total > value) break;
+
+			Transaction tempTransaction = new Transaction(publicKey, recipient, value, inputs);
+			currentFee = tempTransaction.fee;
+			requiredAmount = value + currentFee;
+
+			if (total >= requiredAmount) break;
 		}
 
-		Transaction newTransaction = new Transaction(publicKey, recipient , value, inputs);
+		if (total < requiredAmount) {
+			System.out.println("*Insufficient funds for transaction of value " + value + " and fee " + currentFee + " (Transaction discarded)*");
+			return null;
+		}
+
+		Transaction newTransaction = new Transaction(publicKey, recipient, value, inputs);
 		newTransaction.generateSignature(privateKey);
 
-		for (TransactionInput input: inputs){
+		for (TransactionInput input : inputs) {
 			ownedUTXOs.remove(input.transactionOutputId);
 		}
 
