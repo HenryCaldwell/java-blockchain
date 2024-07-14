@@ -36,10 +36,18 @@ public class Transaction {
         this.fee = calculateTransactionFee();
 	}
 
+    /**
+     * Calculates the transaction fee based on the size of the transaction and the fee rate.
+     * @return The calculated transaction fee.
+     */
     private double calculateTransactionFee() {
         return calculateTransactionSize() * Blockchain.feeRate;
     }
 
+    /**
+     * Calculates the size of the transaction in bytes.
+     * @return The size of the transaction.
+     */
     private int calculateTransactionSize() {
         int size = 0;
 
@@ -93,7 +101,8 @@ public class Transaction {
     public void generateSignature(PrivateKey privateKey) {
         String data = StringUtil.getStringFromKey(sender) + 
 			StringUtil.getStringFromKey(recipient) + 
-			Double.toString(value);
+			Double.toString(value) +
+            Double.toString(fee);
         signature = StringUtil.applyECDSASig(privateKey, data);		
     }
 
@@ -104,7 +113,8 @@ public class Transaction {
     public boolean verifiySignature() {
         String data = StringUtil.getStringFromKey(sender) + 
 			StringUtil.getStringFromKey(recipient) + 
-			Double.toString(value);
+			Double.toString(value) +
+            Double.toString(fee);
         return StringUtil.verifyECDSASig(sender, data, signature);
     }
 

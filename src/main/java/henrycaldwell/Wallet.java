@@ -41,6 +41,46 @@ public class Wallet {
     }
 
 	/**
+     * Creates and signs a new transaction to send funds to a recipient.
+     * @param recipient The public key of the recipient.
+     * @param value The amount to send.
+     * @return The new transaction if successful, or null if there are insufficient funds.
+     */
+	public Transaction sendFunds(PublicKey recipient, double value) {
+		ArrayList<TransactionInput> inputs = new ArrayList<TransactionInput>();
+
+		double total = 0;
+		double requiredAmount = value;
+		double fee = 0;
+
+		for (Map.Entry<String, TransactionOutput> item : ownedUTXOs.entrySet()) {
+			TransactionOutput UTXO = item.getValue();
+			total += UTXO.value;
+			inputs.add(new TransactionInput(UTXO.id));
+
+			Transaction tempTransaction = new Transaction(publicKey, recipient, value, inputs);
+			fee = tempTransaction.fee;
+			requiredAmount = value + fee;
+
+			if (total >= requiredAmount) break;
+		}
+
+		if (total < requiredAmount) {
+			System.out.println("*Insufficient funds for transaction of value " + value + " and fee " + fee + " (Transaction discarded)*");
+			return null;
+		}
+
+		Transaction newTransaction = new Transaction(publicKey, recipient, value, inputs);
+		newTransaction.generateSignature(privateKey);
+
+		for (TransactionInput input : inputs) {
+			ownedUTXOs.remove(input.transactionOutputId);
+		}
+
+		return newTransaction;
+	}
+
+    /**
      * Calculates the balance of the wallet by summing the values of all owned UTXOs.
      * @return The total balance.
      */
@@ -57,45 +97,5 @@ public class Wallet {
         }  
 
 		return total;
-	}
-
-	/**
-     * Creates and signs a new transaction to send funds to a recipient.
-     * @param recipient The public key of the recipient.
-     * @param value The amount to send.
-     * @return The new transaction if successful, or null if there are insufficient funds.
-     */
-	public Transaction sendFunds(PublicKey recipient, double value) {
-		ArrayList<TransactionInput> inputs = new ArrayList<TransactionInput>();
-
-		double total = 0;
-		double requiredAmount = value;
-		double currentFee = 0;
-
-		for (Map.Entry<String, TransactionOutput> item : ownedUTXOs.entrySet()) {
-			TransactionOutput UTXO = item.getValue();
-			total += UTXO.value;
-			inputs.add(new TransactionInput(UTXO.id));
-
-			Transaction tempTransaction = new Transaction(publicKey, recipient, value, inputs);
-			currentFee = tempTransaction.fee;
-			requiredAmount = value + currentFee;
-
-			if (total >= requiredAmount) break;
-		}
-
-		if (total < requiredAmount) {
-			System.out.println("*Insufficient funds for transaction of value " + value + " and fee " + currentFee + " (Transaction discarded)*");
-			return null;
-		}
-
-		Transaction newTransaction = new Transaction(publicKey, recipient, value, inputs);
-		newTransaction.generateSignature(privateKey);
-
-		for (TransactionInput input : inputs) {
-			ownedUTXOs.remove(input.transactionOutputId);
-		}
-
-		return newTransaction;
 	}
 }

@@ -39,22 +39,6 @@ public class Block {
 	}
 
 	/**
-     * Mines the block by finding a hash that starts with a specific number of zeroes (the difficulty), creating a 'proof of work' system.
-     * @param difficulty The difficulty level for mining, represented by the number of zeroes that must lead the hash.
-     */
-	public void mineBlock(int difficulty) {
-		merkleRoot = StringUtil.getMerkleRoot(transactions);
-		String target = new String(new char[difficulty]).replace('\0', '0');
-
-		while (!hash.substring(0, difficulty).equals(target)) {
-			nonce++;
-			hash = calculateHash();
-		}
-
-		System.out.println("*Block mined* HASH: " + hash);
-	}
-
-	/**
      * Adds a transaction to the block after verifying it.
      * @param transaction The transaction to be added to the block.
      * @return True if the transaction was added successfully, false otherwise.
@@ -72,5 +56,21 @@ public class Block {
 
 		transactions.add(transaction);
 		return true;
+	}
+
+    /**
+     * Mines the block by finding a hash that starts with a specific number of zeroes (the difficulty), creating a 'proof of work' system.
+     * @param difficulty The difficulty level for mining, represented by the number of zeroes that must lead the hash.
+     */
+	public void mineBlock(int difficulty) {
+		merkleRoot = StringUtil.getMerkleRoot(transactions);
+		String target = new String(new char[difficulty]).replace('\0', '0');
+
+		while (!hash.substring(0, difficulty).equals(target)) {
+			nonce++;
+			hash = calculateHash();
+		}
+
+		System.out.println("*Block mined* HASH: " + hash);
 	}
 }
