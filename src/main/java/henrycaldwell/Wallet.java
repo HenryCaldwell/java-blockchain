@@ -1,9 +1,12 @@
 package henrycaldwell;
 
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
-import java.security.*;
+import java.security.KeyPairGenerator;
+import java.security.KeyPair;
+import java.security.PublicKey;
+import java.security.PrivateKey;
+import java.security.SecureRandom;
 import java.security.spec.ECGenParameterSpec;
 
 /**
@@ -11,13 +14,13 @@ import java.security.spec.ECGenParameterSpec;
  */
 public class Wallet {
 
-	public PublicKey publicKey; // The public key of the wallet.
-    public PrivateKey privateKey; // The private key of the wallet.
+	private PublicKey publicKey; // The public key of the wallet.
+    private PrivateKey privateKey; // The private key of the wallet.
 
-	public HashMap<String, TransactionOutput> ownedUTXOs = new HashMap<String, TransactionOutput>(); // The UTXOs owned by this wallet.
+	private HashMap<String, TransactionOutput> ownedUTXOs = new HashMap<String, TransactionOutput>(); // The UTXOs owned by this wallet.
 
 	/**
-     * Constructs a Wallet instance and generates a new key pair.
+     * Constructs a Wallet and generates a new key pair.
      */
     public Wallet() {
         generateKeys();
@@ -35,7 +38,7 @@ public class Wallet {
 	        KeyPair keyPair = keyGen.generateKeyPair();
 	        privateKey = keyPair.getPrivate(); 
 	        publicKey = keyPair.getPublic();
-		} catch(Exception e) {
+		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
     }
@@ -44,58 +47,91 @@ public class Wallet {
      * Creates and signs a new transaction to send funds to a recipient.
      * @param recipient The public key of the recipient.
      * @param value The amount to send.
-     * @return The new transaction if successful, or null if there are insufficient funds.
+     * @return The new transaction if successful, or null if failed.
      */
-	public Transaction sendFunds(PublicKey recipient, double value) {
-		ArrayList<TransactionInput> inputs = new ArrayList<TransactionInput>();
+    public Transaction sendFunds(PublicKey recipient, double value) {
+        if (recipient == null) {
+            System.out.println(StringUtil.formatText("WAL001: Recipient is Null - Transaction Discarded", StringUtil.ANSI_RED));
+            return null;
+        }
 
-		double total = 0;
+        ArrayList<TransactionInput> inputs = new ArrayList<>();
+        double total = 0;
+
 		double requiredAmount = value;
 		double fee = 0;
 
-		for (Map.Entry<String, TransactionOutput> item : ownedUTXOs.entrySet()) {
-			TransactionOutput UTXO = item.getValue();
-			total += UTXO.value;
-			inputs.add(new TransactionInput(UTXO.id));
+        getBalance();
 
-			Transaction tempTransaction = new Transaction(publicKey, recipient, value, inputs);
-			fee = tempTransaction.fee;
-			requiredAmount = value + fee;
+        for (TransactionOutput output : ownedUTXOs.values()) {
+            total += output.getValue();
+            inputs.add(new TransactionInput(output.getId()));
 
-			if (total >= requiredAmount) break;
+            Transaction tempTransaction = new Transaction(publicKey, recipient, value, inputs);
+            fee = tempTransaction.getFee();
+            requiredAmount = value + fee;
+
+            if (total >= requiredAmount) {
+                break;
+            }
 		}
 
-		if (total < requiredAmount) {
-			System.out.println("*Insufficient funds for transaction of value " + value + " and fee " + fee + " (Transaction discarded)*");
-			return null;
+        if (total < requiredAmount) {
+			System.out.println(StringUtil.formatText("WAL002: Insufficient Funds for Transaction - Transaction Discarded", StringUtil.ANSI_RED));
+            return null;
 		}
 
-		Transaction newTransaction = new Transaction(publicKey, recipient, value, inputs);
+        Transaction newTransaction = new Transaction(publicKey, recipient, value, inputs);
 		newTransaction.generateSignature(privateKey);
 
-		for (TransactionInput input : inputs) {
-			ownedUTXOs.remove(input.transactionOutputId);
-		}
+        if (!newTransaction.verifyTransaction()) {
+            System.out.println(StringUtil.formatText("WAL003: Transaction Verification Failed - Transaction Discarded", StringUtil.ANSI_RED));
+            return null;
+        }
 
-		return newTransaction;
-	}
+        return newTransaction;
+    }
 
     /**
-     * Calculates the balance of the wallet by summing the values of all owned UTXOs.
+     * Returns the public key of the wallet.
+     * @return The public key.
+     */
+    public PublicKey getPublicKey() {
+        return publicKey;
+    }
+
+    /**
+     * Returns the private key of the wallet.
+     * @return The private key.
+     */
+    public PrivateKey getPrivateKey() {
+        return privateKey;
+    }
+
+    /**
+     * Returns the total balance.
      * @return The total balance.
      */
-	public double getBalance() {
+    public double getBalance() {
+        ownedUTXOs.clear();
 		double total = 0;
 
-		for (Map.Entry<String, TransactionOutput> item : Blockchain.UTXOs.entrySet()){
-        	TransactionOutput UTXO = item.getValue();
-
-            if (UTXO.isMine(publicKey)) {
-            	ownedUTXOs.put(UTXO.id, UTXO);
-            	total += UTXO.value; 
+		for (TransactionOutput output : Blockchain.UTXOs.values()) {
+            if (output.isMine(publicKey)) {
+            	ownedUTXOs.put(output.getId(), output);
+            	total += output.getValue(); 
             }
         }  
 
 		return total;
 	}
+    
+    @Override
+    public String toString() {
+        return "Wallet{" +
+                "publicKey=" + publicKey +
+                ", privateKey=" + privateKey +
+                ", UTXOs=" + ownedUTXOs +
+                '}';
+    }
 }

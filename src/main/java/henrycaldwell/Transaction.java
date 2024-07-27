@@ -3,23 +3,22 @@ package henrycaldwell;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Represents a transaction in the blockchain.
  */
 public class Transaction {
 
-    public String transactionId; // The unique identifier of the transaction.
-    public PublicKey sender; // The public key of the sender.
-    public PublicKey recipient; // The public key of the recipient.
-    public double value; // The value of the transaction.
-    public double fee; // The value of the transaction fee.
-    public byte[] signature; // The digital signature of the transaction.
+    private String transactionId; // The unique identifier of the transaction.
+    private PublicKey sender; // The public key of the sender.
+    private PublicKey recipient; // The public key of the recipient.
+    private double value; // The value of the transaction.
+    private double fee; // The value of the transaction fee.
+    private byte[] signature; // The digital signature of the transaction.
 
-    public ArrayList<TransactionInput> inputs = new ArrayList<TransactionInput>(); // The list of transaction inputs.
-	public ArrayList<TransactionOutput> outputs = new ArrayList<TransactionOutput>(); // The list of transaction outputs.
-
-    private static int sequence = 0; // A counter to avoid identical hashes.
+    private ArrayList<TransactionInput> inputs; // The list of transaction inputs.
+	private ArrayList<TransactionOutput> outputs; // The list of transaction outputs.
 
 	/**
      * Constructs a Transaction with the specified sender, recipient, value, and inputs.
@@ -28,33 +27,118 @@ public class Transaction {
      * @param value The value of the transaction.
      * @param inputs The list of inputs for the transaction.
      */
-    public Transaction(PublicKey from, PublicKey to, double value, ArrayList<TransactionInput> inputs) {
-		this.sender = from;
-		this.recipient = to;
-		this.value = value;
-		this.inputs = inputs;
-        this.fee = calculateTransactionFee();
+    public Transaction(PublicKey sender, PublicKey recipient, double value, ArrayList<TransactionInput> inputs) {
+		this.sender = sender;
+		this.recipient = recipient;
+        this.value = value;
+        this.inputs = new ArrayList<>(inputs);
+        this.outputs = new ArrayList<>();
+		this.fee = calculateTransactionFee();
+        processTransaction();
 	}
 
     /**
-     * Calculates the transaction fee based on the size of the transaction and the fee rate.
-     * @return The calculated transaction fee.
+     * Calculates the hash of the transaction.
+     * @return The calculated hash.
      */
-    private double calculateTransactionFee() {
-        return calculateTransactionSize() * Blockchain.feeRate;
+    public String calculateHash() {
+        StringBuilder data = new StringBuilder();
+
+        data.append(StringUtil.getStringFromKey(sender))
+            .append(StringUtil.getStringFromKey(recipient))
+            .append(Double.toString(value))
+            .append(Double.toString(fee));
+
+        for (TransactionInput input : inputs) {
+            data.append(input.getTransactionOutputId());
+        }
+
+        for (TransactionOutput output : outputs) {
+            data.append(output.getId());
+        }
+
+		return StringUtil.applySha256(data.toString());
+	}
+
+    /**
+     * Generates the digital signature for the transaction using the sender's private key.
+     * @param privateKey The private key of the sender.
+     */
+    public void generateSignature(PrivateKey privateKey) {
+        String data = StringUtil.getStringFromKey(sender) + 
+			StringUtil.getStringFromKey(recipient) + 
+			Double.toString(value) +
+            Double.toString(fee);
+        signature = StringUtil.applyECDSASig(privateKey, data);		
+    }
+
+    /**
+     * Verifies the digital signature of the transaction.
+     * @return True if the signature is valid, false otherwise.
+     */
+    public boolean verifySignature() {
+        String data = StringUtil.getStringFromKey(sender) + 
+			StringUtil.getStringFromKey(recipient) + 
+			Double.toString(value) +
+            Double.toString(fee);
+        return StringUtil.verifyECDSASig(sender, data, signature);
+    }
+
+    /**
+     * Processes the transaction by setting inputs and creating outputs.
+     */
+    public void processTransaction() {
+        for (TransactionInput input : inputs) {
+			input.setUTXO(Blockchain.UTXOs.get(input.getTransactionOutputId()));
+		}
+
+        Double totalValue = value + fee;
+        Double leftOver = getInputsValue() - totalValue;
+
+        outputs.add(new TransactionOutput(recipient, value, transactionId));
+
+        if (leftOver > 0) {
+            outputs.add(new TransactionOutput(sender, leftOver, transactionId));
+        }
+
+        transactionId = calculateHash();
+    }
+
+    /**
+     * Verifies the transaction by checking the signature and the input values.
+     * @return True if the transaction is valid, false otherwise.
+     */
+    public boolean verifyTransaction() {
+        if (!verifySignature()) {
+            System.out.println(StringUtil.formatText("TRX001: Transaction Signature Verification Failed - Transaction Failed to Verify", StringUtil.ANSI_RED));
+			return false;
+        }
+
+        if (getInputsValue() < Blockchain.minimumTransaction) {
+            System.out.println(StringUtil.formatText("TRX002: Transaction Inputs Too Small for Minimum Transaction - Transaction Failed to Verify", StringUtil.ANSI_RED));
+			return false;
+		}
+
+        Double totalValue = value + fee;
+
+        if (getInputsValue() < totalValue) {
+            System.out.println(StringUtil.formatText("TRX003: Transaction Inputs Too Small for Value and Fee - Transaction Failed to Verify", StringUtil.ANSI_RED));
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
      * Calculates the size of the transaction in bytes.
      * @return The size of the transaction.
      */
-    private int calculateTransactionSize() {
+    public int calculateTransactionSize() {
         int size = 0;
 
-        size += 4;  // Version
-        size += 1;  // Input Count
-        size += 1;  // Output Count
-        size += 4;  // Locktime
+        // size += 4;  // Version (not included yet)
+        // size += 4;  // Locktime (not included yet)
 
         // Inputs
         if (inputs != null) {
@@ -63,8 +147,7 @@ public class Transaction {
                 size += 4;  // Previous Transaction Output Index
                 size += 1;  // ScriptSig Size
                 size += 72; // Signature
-                size += 33; // Public Key (compressed)
-                size += 4;  // Sequence
+                size += 33; // Public Key (Compressed)
             }
         }
 
@@ -80,113 +163,121 @@ public class Transaction {
         return size;
     }
 
-	/**
-     * Calculates the hash of the transaction.
-     * @return The calculated hash.
+    /**
+     * Calculates the transaction fee based on the size of the transaction and the fee rate.
+     * @return The calculated transaction fee.
      */
-    private String calulateHash() {
-		sequence++;
-		return StringUtil.applySha256(
-			StringUtil.getStringFromKey(sender) + 
-			StringUtil.getStringFromKey(recipient) + 
-			Double.toString(value) + 
-            Double.toString(fee) +
-			sequence);
-	}
-
-	/**
-     * Generates the digital signature for the transaction using the sender's private key.
-     * @param privateKey The private key of the sender.
-     */
-    public void generateSignature(PrivateKey privateKey) {
-        String data = StringUtil.getStringFromKey(sender) + 
-			StringUtil.getStringFromKey(recipient) + 
-			Double.toString(value) +
-            Double.toString(fee);
-        signature = StringUtil.applyECDSASig(privateKey, data);		
+    public double calculateTransactionFee() {
+        return calculateTransactionSize() * Blockchain.feeRate;
     }
 
-	/**
-     * Verifies the digital signature of the transaction.
-     * @return True if the signature is valid, false otherwise.
+    /**
+     * Returns the transaction ID.
+     * @return The transaction ID.
      */
-    public boolean verifiySignature() {
-        String data = StringUtil.getStringFromKey(sender) + 
-			StringUtil.getStringFromKey(recipient) + 
-			Double.toString(value) +
-            Double.toString(fee);
-        return StringUtil.verifyECDSASig(sender, data, signature);
+    public String getTransactionId() {
+        return transactionId;
     }
 
-	/**
-     * Processes the transaction by verifying its signature, checking its inputs, and updating the blockchain.
-     * @return True if the transaction is successfully processed, false otherwise.
+    /**
+     * Returns the sender's public key.
+     * @return The sender's public key.
      */
-    public boolean processTransaction() {
-        if (!verifiySignature()) {
-			System.out.println("*Transaction signature failed to verify*");
-			return false;
-		}
-
-        for (TransactionInput input : inputs) {
-			input.UTXO = Blockchain.UTXOs.get(input.transactionOutputId);
-		}
-
-        if (getInputsValue() < Blockchain.minimumTransaction) {
-			System.out.println("*Transaction inputs too small: " + getInputsValue() + "*");
-			return false;
-		}
-
-        Double totalValue = value + fee;
-
-        if (getInputsValue() < totalValue) {
-            System.out.println("*Transaction inputs too small to cover value and fee: " + getInputsValue() + "*");
-            return false;
-        }
-
-        Double leftOver = getInputsValue() - totalValue;
-        transactionId = calulateHash();
-        outputs.add(new TransactionOutput(this.recipient, value, transactionId));
-        outputs.add(new TransactionOutput(this.sender, leftOver, transactionId));
-
-        for (TransactionOutput output : outputs) {
-			Blockchain.UTXOs.put(output.id, output);
-		}
-
-        for (TransactionInput input : inputs) {
-			if (input.UTXO == null) continue;
-			Blockchain.UTXOs.remove(input.UTXO.id);
-		}
-
-        return true;
+    public PublicKey getSender() {
+        return sender;
     }
 
-	/**
-     * Calculates the total value of the transaction inputs.
-     * @return The total value.
+    /**
+     * Returns the recipient's public key.
+     * @return The recipient's public key.
+     */
+    public PublicKey getRecipient() {
+        return recipient;
+    }
+
+    /**
+     * Returns the value of the transaction.
+     * @return The value of the transaction.
+     */
+    public double getValue() {
+        return value;
+    }
+
+    /**
+     * Returns the transaction fee.
+     * @return The transaction fee.
+     */
+    public double getFee() {
+        return fee;
+    }
+
+    /**
+     * Returns the digital signature of the transaction.
+     * @return The digital signature of the transaction.
+     */
+    public byte[] getSignature() {
+        return signature;
+    }
+
+    /**
+     * Returns the list of transaction inputs.
+     * @return The list of transaction inputs.
+     */
+    public List<TransactionInput> getInputs() {
+        return inputs;
+    }
+
+    /**
+     * Returns the total value of the transaction inputs.
+     * @return The total value of the transaction inputs.
      */
     public double getInputsValue() {
 		double total = 0;
 
-		for (TransactionInput i : inputs) {
-			if (i.UTXO == null) continue;
-			total += i.UTXO.value;
+		for (TransactionInput input : inputs) {
+			if (input.getUTXO() == null) {
+                continue;
+            }
+
+			total += input.getUTXO().getValue();
 		}
 
 		return total;
 	}
 
-	/**
-     * Calculates the total value of the transaction outputs.
-     * @return The total value.
+    /**
+     * Returns the list of transaction outputs.
+     * @return The list of transaction outputs.
+     */
+    public List<TransactionOutput> getOutputs() {
+        return outputs;
+    }
+
+    /**
+     * Returns the total value of the transaction outputs.
+     * @return The total value of the transaction outputs.
      */
     public double getOutputsValue() {
 		double total = 0;
 
 		for (TransactionOutput output : outputs) {
-			total += output.value;
+			total += output.getValue();
 		}
 
 		return total;
 	}
+
+    @Override
+    public String toString() {
+        return "Transaction{" +
+                "transactionId='" + transactionId + '\'' +
+                ", sender=" + sender +
+                ", recipient=" + recipient +
+                ", value=" + value +
+                ", fee=" + fee +
+                ", signature=" + new String(signature) +
+                ", inputs=" + inputs +
+                ", outputs=" + outputs +
+                '}';
+    }
 }

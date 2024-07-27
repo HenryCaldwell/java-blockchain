@@ -1,0 +1,98 @@
+BLOCK (BLK)
+
+    "error_code": "BLK001",
+    "error_message": "Null Transaction - Unable to Add to Block",
+    "details": "The transaction object provided is null. This prevents the addTransaction method from executing correctly. A valid transaction object must be supplied.",
+    "solution": "Please initialize the transaction object before attempting to add it to the transaction list."
+
+    "error_code": "BLK002",
+    "error_message": "Transaction Verification Failed - Unable to Add to Block",
+    "details": "The transaction failed to verify and, as a result, was not added to the block. Verification ensures the transaction's integrity and validity.",
+    "solution": "Please review the transaction details and ensure all necessary criteria are met before attempting to verify and add it to the block again."
+
+    "error_code": "BLK003",
+    "error_message": "Referenced UTXO Already Used - Unable to Add to Block",
+    "details": "The referenced UTXO (Unspent Transaction Output) has already been used in this block, preventing the transaction from being added to the block.",
+    "solution": "Ensure that the UTXO being referenced is unique and has not been used in the current block before attempting to add the transaction again."
+
+Blockchain (BLC)
+
+    "error_code": "BLC001",
+    "error_message": "Invalid Current Block Hash - Blockchain Failed to Verify",
+    "details": "The hash of the current block does not match the expected value, indicating a possible data corruption or tampering.",
+    "solution": "Verify the block's data and recompute the hash to ensure its integrity."
+
+    "error_code": "BLC002",
+    "error_message": "Invalid Previous Block Hash - Blockchain Failed to Verify",
+    "details": "The hash of the previous block does not match the expected value, which may compromise the blockchain's integrity.",
+    "solution": "Ensure that the hash of the previous block is correctly computed and linked to the current block.
+
+    "error_code": "BLC003",
+    "error_message": "Block Not Mined - Blockchain Failed to Verify",
+    "details": "The block has not been successfully mined, preventing it from being added to the blockchain.",
+    "solution": "Mine the block to generate a valid hash before proceeding with further operations."
+
+    "error_code": "BLC004",
+    "error_message": "Invalid Transaction Signature on Transaction - Blockchain Failed to Verify",
+    "details": "The signature on transaction {j} is invalid, indicating that the transaction may not have been signed by the correct party.",
+    "solution": "Verify the transaction's signature and ensure it is correctly signed by the sender."
+
+    "error_code": "BLC005",
+    "error_message": "BLC005: Mismatched Transaction Inputs and Outputs in Transaction - Blockchain Failed to Verify",
+    "details": "The total value of inputs does not match the total value of outputs in transaction {j}, which may lead to discrepancies.",
+    "solution": "Ensure that the total value of inputs equals the total value of outputs in the transaction."
+
+    "error_code": "BLC006",
+    "error_message": "Missing Referenced Output in Transaction Input - Blockchain Failed to Verify",
+    "details": "Referenced output on transaction input {j} is missing, preventing the transaction from being processed.",
+    "solution": "Verify that all referenced inputs are present and correctly referenced in the transaction."
+
+    "error_code": "BLC007",
+    "error_message": "Invalid Value for Referenced Input in Transaction Input - Blockchain Failed to Verify",
+    "details": "The output recipient of transaction {j} is not the expected party, indicating a potential issue with the transaction.",
+    "solution": "Ensure that the transaction output recipient matches the intended recipient."
+
+    "error_code": "BLC008",
+    "error_message": "Incorrect Output Recipient in Transaction - Blockchain Failed to Verify",
+    "details": "The output recipient of transaction {j} is not the expected party, indicating a potential issue with the transaction.",
+    "solution": "Ensure that the transaction output recipient matches the intended recipient."
+
+    "error_code": "BLC009",
+    "error_message": "Incorrect Change Output in Transaction - Blockchain Failed to Verify",
+    "details": "The change output in transaction {j} is not being returned to the sender, which could lead to a loss of funds.",
+    "solution": "Verify that the change output is correctly directed back to the sender."
+
+Transaction (TRX)
+
+    "error_code": "TRX001",
+    "error_message": "Transaction Signature Verification Failed - Transaction Failed to Verify",
+    "details": "The signature on the transaction failed to verify, indicating that the transaction may not have been signed by the correct party or the signature was tampered with.",
+    "solution": "Verify the transaction's signature and ensure it is correctly signed by the authorized sender."
+
+    "error_code": "TRX002",
+    "error_message": "Transaction Inputs Too Small for Minimum Transaction - Transaction Failed to Verify",
+    "details": "The total value of transaction inputs is too small, amounting to {getInputsValue()}. This is insufficient to cover the transaction value.",
+    "solution": "Ensure that the transaction inputs are sufficient to cover the transaction value."
+
+    "error_code": "TRX003",
+    "error_message": "Transaction Inputs Too Small for Value and Fee - Transaction Failed to Verify",
+    "details": "The total value of transaction inputs, {getInputsValue()}, is too small to cover both the transaction value and the associated fee.",
+    "solution": "Ensure that the transaction inputs are sufficient to cover the transaction value and the required fee."
+
+Wallet (WAL)
+
+    "error_code": "WAL001",
+    "error_message": "Recipient is Null - Transaction Discarded",
+    "details": "The recipient of the transaction is null, rendering the transaction invalid and causing it to be discarded.",
+    "solution": "Ensure that the recipient address is correctly specified before attempting to process the transaction."
+
+    "error_code": "WAL002",
+    "error_message": "Insufficient Funds for Transaction - Transaction Discarded",
+    "details": "There are insufficient funds to cover the transaction value of {value} and the associated fee, resulting in the transaction being discarded.",
+    "solution": "Verify that the account has enough funds to cover the transaction value and the required fee before attempting the transaction again."
+
+
+    "error_code": "WAL003",
+    "error_message": "Transaction Verification Failed - Transaction Discarded",
+    "details": "The transaction failed to verify, resulting in its discard. This may indicate issues with the transaction's integrity or authenticity.",
+    "solution": "Ensure that the transaction meets all verification criteria and is properly signed before attempting to process it again."

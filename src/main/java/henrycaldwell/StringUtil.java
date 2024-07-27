@@ -9,6 +9,22 @@ import java.security.*;
  */
 public class StringUtil {
 
+    public static final String ANSI_RESET = "\u001B[0m"; // The ANSI code for reset.
+    public static final String ANSI_RED = "\u001B[31m"; // The ANSI code for red.
+    public static final String ANSI_GREEN = "\u001B[32m"; // The ANSI code for green.
+    public static final String ANSI_GRAY = "\u001B[90m"; // The ANSI code for gray.
+    public static final String ANSI_ITALIC = "\u001B[3m"; // The ANSI code for italic.
+
+    /**
+     * Applies ANSI color codes to a given text.
+     * @param text The text to color.
+     * @param color The ANSI color code to apply.
+     * @return The colored text string.
+     */
+    public static String formatText(String text, String format) {
+        return format + text + ANSI_RESET;
+    }
+
 	/**
      * Applies the SHA-256 hash function to the given string and converts it to a hashed hexadecimal string.
      * @param input The input string.
@@ -93,7 +109,7 @@ public class StringUtil {
 		ArrayList<String> previousTreeLayer = new ArrayList<String>();
 
 		for(Transaction transaction : transactions) {
-			previousTreeLayer.add(transaction.transactionId);
+			previousTreeLayer.add(transaction.getTransactionId());
 		}
 
 		ArrayList<String> treeLayer = previousTreeLayer;
