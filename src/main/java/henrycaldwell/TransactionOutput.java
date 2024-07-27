@@ -13,7 +13,7 @@ public class TransactionOutput {
     private String parentTransactionId; // The ID of the transaction this output belongs to.
 
     /**
-     * Constructs a TransactionOutput with the specified recipient, value, and IDs.
+     * Constructs a TransactionOutput with the specified recipient, value, and ids.
      * @param recipient The public key of the recipient.
      * @param value The value that was transfered.
      * @param parentTransactionId The ID of the parent transaction.
@@ -22,13 +22,13 @@ public class TransactionOutput {
         this.recipient = recipient;
         this.value = value;
         this.parentTransactionId = parentTransactionId;
-        this.id = StringUtil.applySha256(StringUtil.getStringFromKey(recipient) + Double.toString(value) + parentTransactionId);
+        this.id = SecurityUtil.applySha256(SecurityUtil.getStringFromKey(recipient) + Double.toString(value) + parentTransactionId);
     }
 
     /**
      * Checks if the provided public key matches the recipient's public key.
      * @param publicKey The public key to check.
-     * @return True if the public key matches the recipient's public key, false otherwise.
+     * @return True if the public key matches, false otherwise.
      */
     public boolean isMine(PublicKey publicKey) {
         return publicKey == recipient;
@@ -43,7 +43,7 @@ public class TransactionOutput {
     }
 
     /**
-     * Returns the public key of the recipient who can claim this output.
+     * Returns the public key of the recipient.
      * @return The public key of the recipient.
      */
     public PublicKey getRecipient() {

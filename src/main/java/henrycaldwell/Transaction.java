@@ -1,9 +1,10 @@
 package henrycaldwell;
 
-import java.security.PrivateKey;
-import java.security.PublicKey;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
+
+import java.security.PublicKey;
+import java.security.PrivateKey;
 
 /**
  * Represents a transaction in the blockchain.
@@ -22,8 +23,8 @@ public class Transaction {
 
     /**
      * Constructs a Transaction with the specified sender, recipient, value, and inputs.
-     * @param from The public key of the sender.
-     * @param to The public key of the recipient.
+     * @param sender The public key of the sender.
+     * @param recipient The public key of the recipient.
      * @param value The value of the transaction.
      * @param inputs The list of inputs for the transaction.
      */
@@ -35,53 +36,6 @@ public class Transaction {
         this.outputs = new ArrayList<>();
         this.fee = calculateTransactionFee();
         processTransaction();
-    }
-
-    /**
-     * Calculates the hash of the transaction.
-     * @return The calculated hash.
-     */
-    public String calculateHash() {
-        StringBuilder data = new StringBuilder();
-
-        data.append(StringUtil.getStringFromKey(sender))
-                .append(StringUtil.getStringFromKey(recipient))
-                .append(Double.toString(value))
-                .append(Double.toString(fee));
-
-        for (TransactionInput input : inputs) {
-            data.append(input.getTransactionOutputId());
-        }
-
-        for (TransactionOutput output : outputs) {
-            data.append(output.getId());
-        }
-
-        return StringUtil.applySha256(data.toString());
-    }
-
-    /**
-     * Generates the digital signature for the transaction using the sender's private key.
-     * @param privateKey The private key of the sender.
-     */
-    public void generateSignature(PrivateKey privateKey) {
-        String data = StringUtil.getStringFromKey(sender) +
-                StringUtil.getStringFromKey(recipient) +
-                Double.toString(value) +
-                Double.toString(fee);
-        signature = StringUtil.applyECDSASig(privateKey, data);
-    }
-
-    /**
-     * Verifies the digital signature of the transaction.
-     * @return True if the signature is valid, false otherwise.
-     */
-    public boolean verifySignature() {
-        String data = StringUtil.getStringFromKey(sender) +
-                StringUtil.getStringFromKey(recipient) +
-                Double.toString(value) +
-                Double.toString(fee);
-        return StringUtil.verifyECDSASig(sender, data, signature);
     }
 
     /**
@@ -106,7 +60,7 @@ public class Transaction {
 
     /**
      * Verifies the transaction by checking the signature and the input values.
-     * @return True if the transaction is valid, false otherwise.
+     * @return True if the transaction is verified, false otherwise.
      */
     public boolean verifyTransaction() {
         if (!verifySignature()) {
@@ -129,6 +83,38 @@ public class Transaction {
         return true;
     }
 
+    /**
+     * Generates the digital signature for the transaction using the sender's private key.
+     * @param privateKey The private key of the sender.
+     */
+    public void generateSignature(PrivateKey privateKey) {
+        String data = SecurityUtil.getStringFromKey(sender) +
+                SecurityUtil.getStringFromKey(recipient) +
+                Double.toString(value) +
+                Double.toString(fee);
+        signature = SecurityUtil.applyECDSASig(privateKey, data);
+    }
+
+    /**
+     * Verifies the digital signature of the transaction.
+     * @return True if the signature is valid, false otherwise.
+     */
+    public boolean verifySignature() {
+        String data = SecurityUtil.getStringFromKey(sender) +
+                SecurityUtil.getStringFromKey(recipient) +
+                Double.toString(value) +
+                Double.toString(fee);
+        return SecurityUtil.verifyECDSASig(sender, data, signature);
+    }
+
+    /**
+     * Calculates the transaction fee based on the size of the transaction and the fee rate.
+     * @return The transaction fee.
+     */
+    public double calculateTransactionFee() {
+        return calculateTransactionSize() * Blockchain.feeRate;
+    }
+    
     /**
      * Calculates the size of the transaction in bytes.
      * @return The size of the transaction.
@@ -165,11 +151,26 @@ public class Transaction {
     }
 
     /**
-     * Calculates the transaction fee based on the size of the transaction and the fee rate.
-     * @return The calculated transaction fee.
+     * Calculates the hash of the transaction.
+     * @return The calculated hash.
      */
-    public double calculateTransactionFee() {
-        return calculateTransactionSize() * Blockchain.feeRate;
+    public String calculateHash() {
+        StringBuilder data = new StringBuilder();
+
+        data.append(SecurityUtil.getStringFromKey(sender))
+                .append(SecurityUtil.getStringFromKey(recipient))
+                .append(Double.toString(value))
+                .append(Double.toString(fee));
+
+        for (TransactionInput input : inputs) {
+            data.append(input.getTransactionOutputId());
+        }
+
+        for (TransactionOutput output : outputs) {
+            data.append(output.getId());
+        }
+
+        return SecurityUtil.applySha256(data.toString());
     }
 
     /**

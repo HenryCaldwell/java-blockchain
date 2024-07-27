@@ -5,22 +5,34 @@ import java.util.HashMap;
 
 import java.security.Security;
 
+/**
+ * Represents a blockchain consisting of blocks.
+ */
 public class Blockchain {
 
     public static ArrayList<Block> blockchain = new ArrayList<Block>(); // The list of blocks in the blockchain.
     public static HashMap<String, TransactionOutput> UTXOs = new HashMap<String, TransactionOutput>(); // The list of all unspent transaction outputs (UTXOs).
 
-    public static int difficulty = 5; // The difficulty level for mining new blocks (Typically changed based on number of miners).
     public static double minimumTransaction = 0.01; // The minimum transaction value.
     public static double feeRate = 0.0001; // Fee rate in satoshis per byte
-    public static Transaction genesisTransaction; // The genesis transaction, which initializes the blockchain.
+    public static int difficulty = 5; // The difficulty level for mining new blocks.
+    public static Transaction genesisTransaction; // The genesis transaction, which acts as the initialize total currency.
     public static Block genesisBlock; // The genesis block, which initializes the blockchain.
 
     /**
-     * Validates the entire blockchain, ensuring all blocks and transactions are valid.
-     * @return True if the blockchain is valid, false otherwise.
+     * Adds a new block to the blockchain after having it mined.
+     * @param newBlock The new block to be added.
      */
-    public static Boolean isChainValid() {
+    public static void addBlock(Block newBlock) {
+        newBlock.mineBlock(difficulty);
+        blockchain.add(newBlock);
+    }
+
+    /**
+     * Verifies the entire blockchain, ensuring all blocks and transactions are valid.
+     * @return True if the blockchain is verified, false otherwise.
+     */
+    public static Boolean verifyBlockchain() {
         Block currentBlock;
         Block previousBlock;
         String hashTarget = new String(new char[difficulty]).replace('\0', '0');
@@ -107,15 +119,6 @@ public class Blockchain {
     }
 
     /**
-     * Adds a new block to the blockchain after having it mined.
-     * @param newBlock The new block to be added.
-     */
-    public static void addBlock(Block newBlock) {
-        newBlock.mineBlock(difficulty);
-        blockchain.add(newBlock);
-    }
-
-    /**
      * Main method to initialize the blockchain with the genesis block.
      * @param args Command line arguments.
      */
@@ -161,6 +164,6 @@ public class Blockchain {
         System.out.println("WalletA's balance is: " + walletA.getBalance());
         System.out.println("WalletB's balance is: " + walletB.getBalance());
 
-        isChainValid();
+        verifyBlockchain();
     }
 }

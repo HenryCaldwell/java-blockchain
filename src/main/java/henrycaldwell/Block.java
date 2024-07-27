@@ -1,13 +1,13 @@
 package henrycaldwell;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Set;
+import java.util.HashSet;
+import java.util.Date;
 
 /**
- * Represents a block in a blockchain with transactions, hashes, and other identifiers.
+ * Represents a block in a blockchain.
  */
 public class Block {
 
@@ -20,7 +20,7 @@ public class Block {
     private Set<TransactionOutput> usedUTXOs; // A set to track used UTXOs within this block.
 
     /**
-     * Constructs a Block instance by initializing hashes and timeStamp.
+     * Constructs a Block by initializing hashes and timeStamp.
      * @param previousHash The hash of the previous block.
      */
     public Block(String previousBlockHash) {
@@ -28,21 +28,6 @@ public class Block {
         this.timestamp = new Date().getTime();
         this.transactions = new ArrayList<>();
         this.usedUTXOs = new HashSet<>();
-    }
-
-    /**
-     * Calculates the hash of the block.
-     * @return The calculated hash.
-     */
-    public String calculateHash() {
-        StringBuilder data = new StringBuilder();
-
-        data.append(previousBlockHash)
-                .append(merkleRoot)
-                .append(Long.toString(timestamp))
-                .append(Integer.toString(nonce));
-
-        return StringUtil.applySha256(data.toString());
     }
 
     /**
@@ -73,12 +58,12 @@ public class Block {
         }
 
         transactions.add(transaction);
-        merkleRoot = StringUtil.getMerkleRoot(transactions);
+        merkleRoot = SecurityUtil.getMerkleRoot(transactions);
         return true;
     }
 
     /**
-     * Mines the block by finding a hash that starts with a specific number of zeroes (the difficulty), creating a 'proof of work' system.
+     * Mines the block by finding a hash that starts with a specific number of zeroes (the difficulty) and removes the used UTXOs from the blockchain.
      * @param difficulty The difficulty level for mining, represented by the number of zeroes that must lead the hash.
      */
     public void mineBlock(int difficulty) {
@@ -91,15 +76,6 @@ public class Block {
             hash = calculateHash();
         }
 
-        finalizeBlock();
-
-        System.out.println(StringUtil.formatText("Block Mined Successfully, HASH: " + StringUtil.formatText(hash, StringUtil.ANSI_ITALIC), StringUtil.ANSI_GREEN));
-    }
-
-    /**
-     * Finalizes the block by updating the UTXO set after mining.
-     */
-    private void finalizeBlock() {
         for (Transaction transaction : transactions) {
             for (TransactionInput input : transaction.getInputs()) {
                 Blockchain.UTXOs.remove(input.getTransactionOutputId());
@@ -109,6 +85,23 @@ public class Block {
                 Blockchain.UTXOs.put(output.getId(), output);
             }
         }
+
+        System.out.println(StringUtil.formatText("Block Mined Successfully, HASH: " + StringUtil.formatText(hash, StringUtil.ANSI_ITALIC), StringUtil.ANSI_GREEN));
+    }
+
+    /**
+     * Calculates the hash of the block.
+     * @return The calculated hash.
+     */
+    public String calculateHash() {
+        StringBuilder data = new StringBuilder();
+
+        data.append(previousBlockHash)
+                .append(merkleRoot)
+                .append(Long.toString(timestamp))
+                .append(Integer.toString(nonce));
+
+        return SecurityUtil.applySha256(data.toString());
     }
 
     /**
@@ -128,7 +121,7 @@ public class Block {
     }
 
     /**
-     * Returns the Merkle root of the block.
+     * Returns the Merkle root.
      * @return The Merkle root.
      */
     public String getMerkleRoot() {
@@ -136,7 +129,7 @@ public class Block {
     }
 
     /**
-     * Returns the timestamp of the block.
+     * Returns the timestamp.
      * @return The timestamp.
      */
     public long getTimestamp() {
@@ -144,7 +137,7 @@ public class Block {
     }
 
     /**
-     * Returns the nonce used for mining the block.
+     * Returns the nonce.
      * @return The nonce.
      */
     public int getNonce() {
@@ -152,11 +145,19 @@ public class Block {
     }
 
     /**
-     * Returns the list of transactions in the block.
+     * Returns the list of transactions.
      * @return The list of transactions.
      */
     public List<Transaction> getTransactions() {
         return transactions;
+    }
+
+    /**
+     * Returns the set of used UTXOs.
+     * @return The set of used UTXOs.
+     */
+    public Set<TransactionOutput> getUsedUTXOs() {
+        return usedUTXOs;
     }
 
     @Override

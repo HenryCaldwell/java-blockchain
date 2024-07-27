@@ -2,8 +2,9 @@ package henrycaldwell;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.security.KeyPairGenerator;
+
 import java.security.KeyPair;
+import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.PrivateKey;
 import java.security.SecureRandom;
@@ -93,7 +94,7 @@ public class Wallet {
     }
 
     /**
-     * Returns the public key of the wallet.
+     * Returns the public key.
      * @return The public key.
      */
     public PublicKey getPublicKey() {
@@ -101,7 +102,7 @@ public class Wallet {
     }
 
     /**
-     * Returns the private key of the wallet.
+     * Returns the private key.
      * @return The private key.
      */
     public PrivateKey getPrivateKey() {
@@ -109,7 +110,7 @@ public class Wallet {
     }
 
     /**
-     * Returns the total balance.
+     * Returns the total balance and updates ownedUTXOs.
      * @return The total balance.
      */
     public double getBalance() {
