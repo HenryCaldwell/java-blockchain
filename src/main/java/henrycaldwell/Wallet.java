@@ -14,36 +14,36 @@ import java.security.spec.ECGenParameterSpec;
  */
 public class Wallet {
 
-	private PublicKey publicKey; // The public key of the wallet.
+    private PublicKey publicKey; // The public key of the wallet.
     private PrivateKey privateKey; // The private key of the wallet.
 
-	private HashMap<String, TransactionOutput> ownedUTXOs = new HashMap<String, TransactionOutput>(); // The UTXOs owned by this wallet.
+    private HashMap<String, TransactionOutput> ownedUTXOs = new HashMap<String, TransactionOutput>(); // The UTXOs owned by this wallet.
 
-	/**
+    /**
      * Constructs a Wallet and generates a new key pair.
      */
     public Wallet() {
         generateKeys();
     }
 
-	/**
+    /**
      * Generates a new public-private key pair for the wallet using ECDSA and Bouncy Castle.
      */
     private void generateKeys() {
         try {
-			KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDSA", "BC");
-			SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
-			ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
-			keyGen.initialize(ecSpec, random);
-	        KeyPair keyPair = keyGen.generateKeyPair();
-	        privateKey = keyPair.getPrivate(); 
-	        publicKey = keyPair.getPublic();
-		} catch (Exception e) {
-			throw new RuntimeException(e);
-		}
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDSA", "BC");
+            SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
+            ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
+            keyGen.initialize(ecSpec, random);
+            KeyPair keyPair = keyGen.generateKeyPair();
+            privateKey = keyPair.getPrivate();
+            publicKey = keyPair.getPublic();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-	/**
+    /**
      * Creates and signs a new transaction to send funds to a recipient.
      * @param recipient The public key of the recipient.
      * @param value The amount to send.
@@ -58,8 +58,8 @@ public class Wallet {
         ArrayList<TransactionInput> inputs = new ArrayList<>();
         double total = 0;
 
-		double requiredAmount = value;
-		double fee = 0;
+        double requiredAmount = value;
+        double fee = 0;
 
         getBalance();
 
@@ -74,15 +74,15 @@ public class Wallet {
             if (total >= requiredAmount) {
                 break;
             }
-		}
+        }
 
         if (total < requiredAmount) {
-			System.out.println(StringUtil.formatText("WAL002: Insufficient Funds for Transaction - Transaction Discarded", StringUtil.ANSI_RED));
+            System.out.println(StringUtil.formatText("WAL002: Insufficient Funds for Transaction - Transaction Discarded", StringUtil.ANSI_RED));
             return null;
-		}
+        }
 
         Transaction newTransaction = new Transaction(publicKey, recipient, value, inputs);
-		newTransaction.generateSignature(privateKey);
+        newTransaction.generateSignature(privateKey);
 
         if (!newTransaction.verifyTransaction()) {
             System.out.println(StringUtil.formatText("WAL003: Transaction Verification Failed - Transaction Discarded", StringUtil.ANSI_RED));
@@ -114,18 +114,18 @@ public class Wallet {
      */
     public double getBalance() {
         ownedUTXOs.clear();
-		double total = 0;
+        double total = 0;
 
-		for (TransactionOutput output : Blockchain.UTXOs.values()) {
+        for (TransactionOutput output : Blockchain.UTXOs.values()) {
             if (output.isMine(publicKey)) {
-            	ownedUTXOs.put(output.getId(), output);
-            	total += output.getValue(); 
+                ownedUTXOs.put(output.getId(), output);
+                total += output.getValue();
             }
-        }  
+        }
 
-		return total;
-	}
-    
+        return total;
+    }
+
     @Override
     public String toString() {
         return "Wallet{" +

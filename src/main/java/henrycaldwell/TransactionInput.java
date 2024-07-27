@@ -4,17 +4,17 @@ package henrycaldwell;
  * Represents an input in a blockchain transaction.
  */
 public class TransactionInput {
-    
+
     private String transactionOutputId; // The ID of the transaction output.
     private TransactionOutput UTXO; // The unspent transaction output (UTXO) that this input references.
 
     /**
      * Constructs a TransactionInput with the specified transaction output ID.
-	 * @param transactionOutputId The ID of the transaction output to be used.
+     * @param transactionOutputId The ID of the transaction output to be used.
      */
     public TransactionInput(String transactionOutputId) {
         this.transactionOutputId = transactionOutputId;
-	}
+    }
 
     /**
      * Returns the ID of the transaction output.

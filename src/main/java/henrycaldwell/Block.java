@@ -13,44 +13,44 @@ public class Block {
 
     private String hash, previousBlockHash; // The hash and previous hash of the previous block.
     private String merkleRoot; // The merkle root hash of all the transactions in the block.
-	private long timestamp;	// The time of the blocks creation in miliseconds.
-	private int nonce; // The nonce value used for mining the block.
+    private long timestamp; // The time of the blocks creation in miliseconds.
+    private int nonce; // The nonce value used for mining the block.
 
     private ArrayList<Transaction> transactions; // The list of transactions in the block.
     private Set<TransactionOutput> usedUTXOs; // A set to track used UTXOs within this block.
 
-	/**
+    /**
      * Constructs a Block instance by initializing hashes and timeStamp.
-	 * @param previousHash The hash of the previous block.
+     * @param previousHash The hash of the previous block.
      */
-	public Block(String previousBlockHash) {
+    public Block(String previousBlockHash) {
         this.previousBlockHash = previousBlockHash;
-		this.timestamp = new Date().getTime();
+        this.timestamp = new Date().getTime();
         this.transactions = new ArrayList<>();
         this.usedUTXOs = new HashSet<>();
-	}
+    }
 
-	/**
+    /**
      * Calculates the hash of the block.
      * @return The calculated hash.
      */
-	public String calculateHash() {
+    public String calculateHash() {
         StringBuilder data = new StringBuilder();
 
         data.append(previousBlockHash)
-            .append(merkleRoot)
-            .append(Long.toString(timestamp))
-            .append(Integer.toString(nonce));
+                .append(merkleRoot)
+                .append(Long.toString(timestamp))
+                .append(Integer.toString(nonce));
 
         return StringUtil.applySha256(data.toString());
-	}
+    }
 
-	/**
+    /**
      * Adds a transaction to the block after verifying it.
      * @param transaction The transaction to be added to the block.
      * @return True if the transaction was added successfully, false otherwise.
      */
-	public boolean addTransaction(Transaction transaction) {
+    public boolean addTransaction(Transaction transaction) {
         if (transaction == null) {
             System.out.println(StringUtil.formatText("BLK001: Null Transaction - Unable to Add to Block", StringUtil.ANSI_RED));
             return false;
@@ -71,30 +71,30 @@ public class Block {
 
             usedUTXOs.add(UTXO);
         }
-		
-		transactions.add(transaction);
+
+        transactions.add(transaction);
         merkleRoot = StringUtil.getMerkleRoot(transactions);
-		return true;
-	}
+        return true;
+    }
 
     /**
      * Mines the block by finding a hash that starts with a specific number of zeroes (the difficulty), creating a 'proof of work' system.
      * @param difficulty The difficulty level for mining, represented by the number of zeroes that must lead the hash.
      */
-	public void mineBlock(int difficulty) {
-		String target = new String(new char[difficulty]).replace('\0', '0');
+    public void mineBlock(int difficulty) {
+        String target = new String(new char[difficulty]).replace('\0', '0');
 
         hash = calculateHash();
 
-		while (!hash.substring(0, difficulty).equals(target)) {
-			nonce++;
-			hash = calculateHash();
-		}
+        while (!hash.substring(0, difficulty).equals(target)) {
+            nonce++;
+            hash = calculateHash();
+        }
 
         finalizeBlock();
 
         System.out.println(StringUtil.formatText("Block Mined Successfully, HASH: " + StringUtil.formatText(hash, StringUtil.ANSI_ITALIC), StringUtil.ANSI_GREEN));
-	}
+    }
 
     /**
      * Finalizes the block by updating the UTXO set after mining.
