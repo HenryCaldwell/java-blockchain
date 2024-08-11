@@ -129,16 +129,19 @@ public class Blockchain {
         Wallet walletA = new Wallet();
         Wallet walletB = new Wallet();
 
+        // Creation of genesis UTXO
         TransactionOutput genesisUTXO = new TransactionOutput(coinbase.getPublicKey(), 1000000, null);
         UTXOs.put(genesisUTXO.getId(), genesisUTXO);
         genesisTransaction = coinbase.sendFunds(walletA.getPublicKey(), 500);
         genesisTransaction.generateSignature(coinbase.getPrivateKey());
 
+        // Successful addition of genesis block
         System.out.println("Creating and mining genesis block... ");
         genesisBlock = new Block("0".repeat(64));
         genesisBlock.addTransaction(genesisTransaction);
         addBlock(genesisBlock);
 
+        // Successful transaction
         Block block1 = new Block(genesisBlock.getHash());
         System.out.println("WalletA's balance is: " + walletA.getBalance());
         System.out.println("WalletA is attempting to send funds (40) to WalletB...");
@@ -147,6 +150,7 @@ public class Blockchain {
         System.out.println("WalletA's balance is: " + walletA.getBalance());
         System.out.println("WalletB's balance is: " + walletB.getBalance());
 
+        // Unsuccessful transaction (Exceeds funds)
         Block block2 = new Block(block1.getHash());
         System.out.println("WalletA is attempting to send more funds (1000) than it has...");
         block2.addTransaction(walletA.sendFunds(walletB.getPublicKey(), 1000));
@@ -154,11 +158,11 @@ public class Blockchain {
         System.out.println("WalletA's balance is: " + walletA.getBalance());
         System.out.println("WalletB's balance is: " + walletB.getBalance());
 
+        // Unsuccessful transaction (Duplicate UTXOs)
         Block block3 = new Block(block2.getHash());
-        System.out.println("WalletB's balance is: " + walletB.getBalance());
         System.out.println("WalletB is attempting to send funds (20) to WalletA...");
         block3.addTransaction(walletB.sendFunds(walletA.getPublicKey(), 20));
-        System.out.println("WalletB is attempting to send funds (20) to WalletA without updated UTXOs...");
+        System.out.println("WalletB is attempting to send funds (20) to WalletA with identical UTXOs...");
         block3.addTransaction(walletB.sendFunds(walletA.getPublicKey(), 20));
         addBlock(block3);
         System.out.println("WalletA's balance is: " + walletA.getBalance());
