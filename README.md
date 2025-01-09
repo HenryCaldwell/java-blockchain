@@ -1,6 +1,6 @@
 # Java Blockchain
 
-THIS PROJECT WAS MADE WITH THE HELP OF [KASS'](https://medium.com/@cryptokass) BLOCKCHAIN DEVELOPMENT GUIDES, AND FURTHER EXPANDED UPON WITH THINGS SUCH AS TRANSACTION FEES, IMPROVED ORGANIZATION, IMPROVED UTXO HANDLING, AND MORE.
+THIS PROJECT WAS DEVELOPED WITH THE HELP OF [KASS'](https://medium.com/@cryptokass) BLOCKCHAIN DEVELOPMENT GUIDES, AND FURTHER EXPANDED UPON WITH THINGS SUCH AS TRANSACTION FEES, IMPROVED ORGANIZATION, IMPROVED UTXO HANDLING, AND MORE.
 
 This repository contains a Java implementation of a simple blockchain, featuring multiple classes that work together to simulate the blockchain operations, including block creation, transaction handling, and blockchain validation.
 
